@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FURNITURE & ELEKTRONIK</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Link ke Manifest PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a237e">
+</head>
+<body>
+
+    <header>
+        <h1>FURNITURE & ELEKTRONIK</h1>
+        <p>Katalog Modern & Pilihan Terbaik Untuk Rumah Anda</p>
+    </header>
+
+    <main>
+        <section class="kategori">
+            <h2>Kategori Pilihan</h2>
+            <div class="grid-container">
+                <!-- Card 1 -->
+                <div class="card">
+                    <div class="badge">Furniture</div>
+                    <h3>Sofa Minimalis</h3>
+                    <p>Sofa ruang tamu premium dengan busa empuk dan kain tahan lama.</p>
+                </div>
+                <!-- Card 2 -->
+                <div class="card">
+                    <div class="badge">Elektronik</div>
+                    <h3>Smart TV 4K</h3>
+                    <p>Televisi pintar resolusi ultra HD dengan fitur perintah suara.</p>
+                </div>
+                <!-- Card 3 -->
+                <div class="card">
+                    <div class="badge">Furniture</div>
+                    <h3>Meja Kerja Kayu</h3>
+                    <p>Meja belajar dan kerja ergonomis dari bahan kayu jati asli.</p>
+                </div>
+                <!-- Card 4 -->
+                <div class="card">
+                    <div class="badge">Elektronik</div>
+                    <h3>Kulkas Inverter</h3>
+                    <p>Lemari es hemat energi dengan teknologi pendingin cepat.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 FURNITURE & ELEKTRONIK. Bisa diakses offline.</p>
+    </footer>
+
+    <!-- Script PWA Pendaftaran Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker terdaftar successfully!', reg.scope))
+                    .catch(err => console.log('Service Worker gagal didaftarkan:', err));
+            });
+        }
+    </script>
+</body>
+</html>
