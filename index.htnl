@@ -5,44 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FURNITURE & ELEKTRONIK</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Link ke Manifest PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a237e">
 </head>
 <body>
 
-    <header>
-        <h1>FURNITURE & ELEKTRONIK</h1>
-        <p>Katalog Modern & Pilihan Terbaik Untuk Rumah Anda</p>
+    <!-- 1. HEADER UTAMA -->
+    <header class="main-header">
+        <div class="header-container">
+            <!-- Logo Kotak Sebelah Kiri -->
+            <div class="logo-area">
+                <img src="logo.png" alt="Logo Toko" class="logo-img">
+            </div>
+            
+            <!-- Tombol Garis Tiga Sebelah Kanan -->
+            <button class="hamburger-menu" id="menuBtn" aria-label="Buka Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
     </header>
 
-    <main>
+    <!-- POPUP MENU OVERLAY (Muncul saat garis tiga diklik) -->
+    <div class="menu-overlay" id="menuOverlay">
+        <button class="close-btn" id="closeBtn">&times;</button>
+        <nav class="overlay-nav">
+            <a href="#beranda" class="menu-item">Beranda</a>
+            <a href="#galery" class="menu-item">Galery</a>
+            <a href="#testimoni" class="menu-item">Testimoni</a>
+            <a href="#hubungi" class="menu-item">Hubungi</a>
+            <a href="#tentang" class="menu-item">Tentang Kami</a>
+        </nav>
+    </div>
+
+    <!-- 2. BANNER / SPANDUK TOKO -->
+    <section class="banner-section">
+        <img src="banner.jpg" alt="Spanduk Toko Furniture & Elektronik" class="banner-img">
+    </section>
+
+    <!-- KONTEN KATALOG (OPSIONAL/SISA KONTEN) -->
+    <main id="beranda">
         <section class="kategori">
-            <h2>Kategori Pilihan</h2>
+            <h2>Katalog Produk</h2>
             <div class="grid-container">
-                <!-- Card 1 -->
                 <div class="card">
                     <div class="badge">Furniture</div>
                     <h3>Sofa Minimalis</h3>
                     <p>Sofa ruang tamu premium dengan busa empuk dan kain tahan lama.</p>
                 </div>
-                <!-- Card 2 -->
                 <div class="card">
                     <div class="badge">Elektronik</div>
                     <h3>Smart TV 4K</h3>
                     <p>Televisi pintar resolusi ultra HD dengan fitur perintah suara.</p>
-                </div>
-                <!-- Card 3 -->
-                <div class="card">
-                    <div class="badge">Furniture</div>
-                    <h3>Meja Kerja Kayu</h3>
-                    <p>Meja belajar dan kerja ergonomis dari bahan kayu jati asli.</p>
-                </div>
-                <!-- Card 4 -->
-                <div class="card">
-                    <div class="badge">Elektronik</div>
-                    <h3>Kulkas Inverter</h3>
-                    <p>Lemari es hemat energi dengan teknologi pendingin cepat.</p>
                 </div>
             </div>
         </section>
@@ -52,13 +67,37 @@
         <p>&copy; 2026 FURNITURE & ELEKTRONIK. Bisa diakses offline.</p>
     </footer>
 
-    <!-- Script PWA Pendaftaran Service Worker -->
+    <!-- SCRIPT UNTUK INTERAKSI POPUP MENU & PWA -->
     <script>
+        // Logika Interaksi Hambuger Menu
+        const menuBtn = document.getElementById('menuBtn');
+        const closeBtn = document.getElementById('closeBtn');
+        const menuOverlay = document.getElementById('menuOverlay');
+        const menuItems = document.querySelectorAll('.menu-item');
+
+        // Buka Popup
+        menuBtn.addEventListener('click', () => {
+            menuOverlay.classList.add('active');
+        });
+
+        // Tutup Popup via Tombol Silang
+        closeBtn.addEventListener('click', () => {
+            menuOverlay.classList.remove('active');
+        });
+
+        // Tutup Popup otomatis jika salah satu menu diklik
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                menuOverlay.classList.remove('active');
+            });
+        });
+
+        // Registrasi Service Worker PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('Service Worker terdaftar successfully!', reg.scope))
-                    .catch(err => console.log('Service Worker gagal didaftarkan:', err));
+                    .then(reg => console.log('PWA Service Worker Aktif!'))
+                    .catch(err => console.log('SW Gagal:', err));
             });
         }
     </script>
