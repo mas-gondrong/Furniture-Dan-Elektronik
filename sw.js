@@ -1,4 +1,4 @@
-const CACHE_NAME = 'furnitek-cache-v4';
+const CACHE_NAME = 'furnitek-cache-v5';
 const assetsToCache = [
   './',
   './index.html',
