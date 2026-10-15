@@ -13,12 +13,9 @@
     <!-- 1. HEADER UTAMA -->
     <header class="main-header">
         <div class="header-container">
-            <!-- Logo Kotak Sebelah Kiri -->
             <div class="logo-area">
                 <img src="logo.png" alt="Logo Toko" class="logo-img">
             </div>
-            
-            <!-- Tombol Garis Tiga Sebelah Kanan -->
             <button class="hamburger-menu" id="menuBtn" aria-label="Buka Menu">
                 <span></span>
                 <span></span>
@@ -27,7 +24,7 @@
         </div>
     </header>
 
-    <!-- POPUP MENU OVERLAY (Muncul saat garis tiga diklik) -->
+    <!-- POPUP MENU OVERLAY -->
     <div class="menu-overlay" id="menuOverlay">
         <button class="close-btn" id="closeBtn">&times;</button>
         <nav class="overlay-nav">
@@ -36,6 +33,7 @@
             <a href="#testimoni" class="menu-item">Testimoni</a>
             <a href="#hubungi" class="menu-item">Hubungi</a>
             <a href="#tentang" class="menu-item">Tentang Kami</a>
+            <a href="admin.html" class="menu-item" style="color: #ffeb3b;">Admin Panel</a>
         </nav>
     </div>
 
@@ -44,7 +42,7 @@
         <img src="banner.png" alt="Spanduk Toko Furniture & Elektronik" class="banner-img">
     </section>
 
-    <!-- 3. KATA PEMBUKA / SAMBUTAN TOKO -->
+    <!-- 3. KATA PEMBUKA -->
     <section class="welcome-section">
         <div class="welcome-container">
             <h2>Selamat Datang di FURNITEK Furniture & Elektronik!</h2>
@@ -56,21 +54,31 @@
         </div>
     </section>
 
-    <!-- 4. KONTEN KATALOG PRODUK -->
+    <!-- 4. KONTEN KATALOG PRODUK (DINAMIS VIA ADMIN) -->
     <main id="beranda">
-        <section class="kategori">
-            <h2>Katalog Produk</h2>
-            <div class="grid-container">
-                <div class="card">
-                    <div class="badge">Furniture</div>
-                    <h3>Sofa Minimalis</h3>
-                    <p>Sofa ruang tamu premium dengan busa empuk dan kain tahan lama.</p>
-                </div>
-                <div class="card">
-                    <div class="badge">Elektronik</div>
-                    <h3>Smart TV 4K</h3>
-                    <p>Televisi pintar resolusi ultra HD dengan fitur perintah suara.</p>
-                </div>
+        <h2 class="main-title">Katalog Produk</h2>
+        
+        <!-- Sub-Kategori 1: Furniture -->
+        <section class="sub-kategori-section">
+            <h3 class="sub-title">1. Furniture</h3>
+            <div class="grid-container" id="container-furniture">
+                <!-- Produk Otomatis Muncul Di Sini -->
+            </div>
+        </section>
+
+        <!-- Sub-Kategori 2: Elektronik -->
+        <section class="sub-kategori-section">
+            <h3 class="sub-title">2. Elektronik</h3>
+            <div class="grid-container" id="container-elektronik">
+                <!-- Produk Otomatis Muncul Di Sini -->
+            </div>
+        </section>
+
+        <!-- Sub-Kategori 3: Peralatan Rumah Tangga -->
+        <section class="sub-kategori-section">
+            <h3 class="sub-title">3. Peralatan Rumah Tangga</h3>
+            <div class="grid-container" id="container-peralatan">
+                <!-- Produk Otomatis Muncul Di Sini -->
             </div>
         </section>
     </main>
@@ -79,32 +87,66 @@
         <p>&copy; 2026 FURNITURE & ELEKTRONIK. Bisa diakses offline.</p>
     </footer>
 
-    <!-- SCRIPT UNTUK INTERAKSI POPUP MENU & PWA -->
+    <!-- SCRIPT UTAMA -->
     <script>
+        // Menu Hamburger logic
         const menuBtn = document.getElementById('menuBtn');
         const closeBtn = document.getElementById('closeBtn');
         const menuOverlay = document.getElementById('menuOverlay');
-        const menuItems = document.querySelectorAll('.menu-item');
-
-        menuBtn.addEventListener('click', () => {
-            menuOverlay.classList.add('active');
+        menuBtn.addEventListener('click', () => menuOverlay.classList.add('active'));
+        closeBtn.addEventListener('click', () => menuOverlay.classList.remove('active'));
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', () => menuOverlay.classList.remove('active'));
         });
 
-        closeBtn.addEventListener('click', () => {
-            menuOverlay.classList.remove('active');
-        });
+        // AMBIL & TAMPILKAN DATA DARI ADMIN (LOCALSTORAGE)
+        function loadProducts() {
+            const products = JSON.parse(localStorage.getItem('furnitek_products')) || [];
+            
+            // Bersihkan semua container terlebih dahulu
+            document.getElementById('container-furniture').innerHTML = '<p class="empty-text">Belum ada produk diunggah.</p>';
+            document.getElementById('container-elektronik').innerHTML = '<p class="empty-text">Belum ada produk diunggah.</p>';
+            document.getElementById('container-peralatan').innerHTML = '<p class="empty-text">Belum ada produk diunggah.</p>';
 
-        menuItems.forEach(item => {
-            item.addEventListener('click', () => {
-                menuOverlay.classList.remove('active');
+            let counts = { furniture: 0, elektronik: 0, peralatan: 0 };
+
+            products.forEach(prod => {
+                const cardHTML = `
+                    <div class="card">
+                        <div class="card-img-wrapper">
+                            <img src="${prod.image || 'https://placehold.co'}" alt="${prod.title}" class="prod-img">
+                        </div>
+                        <div class="card-content">
+                            <div class="badge">${prod.category.toUpperCase()}</div>
+                            <h3>${prod.title}</h3>
+                            <p>${prod.desc}</p>
+                        </div>
+                    </div>
+                `;
+
+                if (prod.category === 'furniture') {
+                    if(counts.furniture === 0) document.getElementById('container-furniture').innerHTML = '';
+                    document.getElementById('container-furniture').innerHTML += cardHTML;
+                    counts.furniture++;
+                } else if (prod.category === 'elektronik') {
+                    if(counts.elektronik === 0) document.getElementById('container-elektronik').innerHTML = '';
+                    document.getElementById('container-elektronik').innerHTML += cardHTML;
+                    counts.elektronik++;
+                } else if (prod.category === 'peralatan') {
+                    if(counts.peralatan === 0) document.getElementById('container-peralatan').innerHTML = '';
+                    document.getElementById('container-peralatan').innerHTML += cardHTML;
+                    counts.peralatan++;
+                }
             });
-        });
+        }
 
+        // Jalankan saat halaman dibuka
+        window.addEventListener('DOMContentLoaded', loadProducts);
+
+        // Registrasi Service Worker PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('PWA Service Worker Aktif!'))
-                    .catch(err => console.log('SW Gagal:', err));
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Gagal:', err));
             });
         }
     </script>
