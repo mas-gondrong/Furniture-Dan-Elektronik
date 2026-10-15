@@ -226,3 +226,37 @@ footer {
     }
 }
 
+/* --- FORMAT BARU GAMBAR KATALOG DI INDEX --- */
+.sub-kategori-section {
+    margin-bottom: 3rem;
+}
+.sub-title {
+    color: #333;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #ddd;
+}
+.card-img-wrapper {
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+    border-radius: 6px 6px 0 0;
+    margin: -1.5rem -1.5rem 1rem -1.5rem; /* Menyeimbangkan padding card */
+}
+.prod-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.card-content {
+    padding-top: 0.5rem;
+}
+.empty-text {
+    color: #999;
+    font-style: italic;
+    grid-column: 1 / -1;
+    padding: 1rem 0;
+}
+
+
