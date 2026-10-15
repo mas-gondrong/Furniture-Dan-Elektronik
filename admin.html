@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - FURNITEK</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Gaya Khusus Admin CSS (Bisa diletakkan di sini atau digabung ke style.css) */
+        .admin-nav { display: flex; justify-content: space-between; background: #222; padding: 1rem; }
+        .admin-nav a, .admin-nav button { padding: 0.5rem 1rem; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; text-decoration: none;}
+        .btn-back { background: #0d47a1; color: white; }
+        .btn-logout { background: #d32f2f; color: white; }
+        .form-box { background: white; max-width: 600px; margin: 2rem auto; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 1.2rem; display: flex; flex-direction: column; }
+        .form-group label { font-weight: bold; margin-bottom: 0.5rem; }
+        .form-group input, .form-group select, .form-group textarea { padding: 0.7rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+        .btn-submit { background: #1a237e; color: white; border: none; padding: 0.8rem; font-size: 1rem; border-radius: 4px; cursor: pointer; font-weight: bold;}
+        .admin-list { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+        .admin-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .admin-table th, .admin-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #eee; }
+        .admin-table th { background: #1a237e; color: white; }
+        .btn-edit { background: #ffa000; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; margin-right: 5px; }
+        .btn-delete { background: #d32f2f; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; }
+        .img-preview-table { width: 60px; height: 40px; object-fit: cover; border-radius: 4px; }
+    </style>
+</head>
+<body style="background-color: #f0f2f5;">
+
+    <!-- BAR NAVIGASI ADMIN -->
+    <nav class="admin-nav">
+        <a href="index.html" class="btn-back">← Kembali ke Beranda</a>
+        <button onclick="logoutAdmin()" class="btn-logout">Logout ✖</button>
+    </nav>
+
+    <!-- FORM INPUT & EDIT PRODUK -->
+    <div class="form-box">
+        <h2 id="form-title" style="margin-bottom: 1.5rem; color: #1a237e;">Upload / Tambah Produk Baru</h2>
+        <form id="productForm">
+            <input type="hidden" id="editIndex" value="-1">
+            <div class="form-group">
+                <label for="prodTitle">Nama Produk</label>
+                <input type="text" id="prodTitle" placeholder="Misal: Sofa Ruang Tamu L" required>
+            </div>
+            <div class="form-group">
+                <label for="prodCategory">Kategori</label>
+                <select id="prodCategory" required>
+                    <option value="furniture">Furniture</option>
+                    <option value="elektronik">Elektronik</option>
+                    <option value="peralatan">Peralatan Rumah Tangga</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="prodImage">URL Foto / Gambar Produk</label>
+                <input type="text" id="prodImage" placeholder="Masukkan URL Gambar (Atau taruh nama file seperti sofa.jpg)" required>
+            </div>
+            <div class="form-group">
+                <label for="prodDesc">Deskripsi Ringkas</label>
+                <textarea id="prodDesc" rows="3" placeholder="Tuliskan keunggulan produk..." required></textarea>
+            </div>
+            <button type="submit" class="btn-submit" id="btnSave">Simpan & Unggah Produk</button>
+        </form>
+    </div>
+
+    <!-- DAFTAR MANAGEMENT KATALOG -->
+    <div class="admin-list">
+        <h2 style="color: #222; margin-bottom: 1rem;">Manajemen Produk Terunggah</h2>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Nama Produk</th>
+                    <th>Kategori</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="adminTableBody">
+                <!-- Diisi otomatis oleh JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const productForm = document.getElementById('productForm');
+        const adminTableBody = document.getElementById('adminTableBody');
+
+        // Ambil Data dari Memori Browser
+        let products = JSON.parse(localStorage.getItem('furnitek_products')) || [];
+
+        // Fungsi Menampilkan Daftar di Tabel Management
+        function renderAdminTable() {
+            adminTableBody.innerHTML = '';
+            if(products.length === 0) {
+                adminTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999;">Belum ada katalog produk.</td></tr>`;
+                return;
+            }
+
+            products.forEach((prod, index) => {
+                adminTableBody.innerHTML += `
+                    <tr>
+                        <td><img src="${prod.image}" class="img-preview-table" onerror="this.src='https://placehold.co'"></td>
+                        <td><strong>${prod.title}</strong></td>
+                        <td><span class="badge" style="margin:0;">${prod.category}</span></td>
+                        <td>
+                            <button class="btn-edit" onclick="editProduct(${index})">Edit</button>
+                            <button class="btn-delete" onclick="deleteProduct(${index})">Hapus</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Event saat Form dikirim (Tambah / Update)
+        productForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const index = document.getElementById('editIndex').value;
+            const newProduct = {
+                title: document.getElementById('prodTitle').value,
+                category: document.getElementById('prodCategory').value,
+                image: document.getElementById('prodImage').value,
+                desc: document.getElementById('prodDesc').value
+            };
+
+            if (index === "-1") {
+                // Tambah baru
+                products.push(newProduct);
+            } else {
+                // Update yang diedit
+                products[index] = newProduct;
+                document.getElementById('editIndex').value = "-1";
+                document.getElementById('form-title').innerText = "Upload / Tambah Produk Baru";
+                document.getElementById('btnSave').innerText = "Simpan & Unggah Produk";
+            }
+
+            localStorage.setItem('furnitek_products', JSON.stringify(products));
+            productForm.reset();
+            renderAdminTable();
+            alert('Katalog berhasil diperbarui!');
+        });
+
+        // Fungsi Hapus Produk
+        window.deleteProduct = function(index) {
+            if(confirm('Apakah Anda yakin ingin menghapus produk ini dari katalog?')) {
+                products.splice(index, 1);
+                localStorage.setItem('furnitek_products', JSON.stringify(products));
+                renderAdminTable();
+            }
+        }
+
+        // Fungsi Membuka Mode Edit
+        window.editProduct = function(index) {
+            const prod = products[index];
+            document.getElementById('editIndex').value = index;
+            document.getElementById('prodTitle').value = prod.title;
+            document.getElementById('prodCategory').value = prod.category;
+            document.getElementById('prodImage').value = prod.image;
+            document.getElementById('prodDesc').value = prod.desc;
+
+            document.getElementById('form-title').innerText = "✏️ Mode Edit Produk: " + prod.title;
+            document.getElementById('btnSave').innerText = "Perbarui Produk";
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        // Fungsi Logout Simulasi
+        window.logoutAdmin = function() {
+            if(confirm('Keluar dari Admin Panel?')) {
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Render pertama kali terbuka
+        renderAdminTable();
+    </script>
+</body>
+</html>
