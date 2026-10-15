@@ -41,10 +41,22 @@
 
     <!-- 2. BANNER / SPANDUK TOKO -->
     <section class="banner-section">
-        <img src="banner.png" alt="Spanduk Toko Furniture & Elektronik" class="banner-img">
+        <img src="banner.jpg" alt="Spanduk Toko Furniture & Elektronik" class="banner-img">
     </section>
 
-    <!-- KONTEN KATALOG (OPSIONAL/SISA KONTEN) -->
+    <!-- 3. KATA PEMBUKA / SAMBUTAN TOKO -->
+    <section class="welcome-section">
+        <div class="welcome-container">
+            <h2>Selamat Datang di FURNITEK Furniture & Elektronik!</h2>
+            <p>Selamat datang di FURNITEK, tempat Anda menemukan beragam kebutuhan furniture dan elektronik untuk melengkapi rumah impian Anda.</p>
+            <p>Kami menyediakan berbagai pilihan produk, mulai dari sofa, lemari, meja, tempat tidur, televisi, kulkas, mesin cuci, hingga peralatan elektronik dan aksesoris rumah tangga lainnya.</p>
+            <p>Dengan pilihan produk yang beragam, kami ingin membantu Anda menciptakan rumah yang nyaman, indah, dan modern sesuai kebutuhan serta anggaran Anda.</p>
+            <p class="tagline">FURNITEK — Lengkap Pilihannya, Nyaman Rumahnya!</p>
+            <p class="closing">Silakan jelajahi kategori produk kami dan temukan pilihan terbaik untuk rumah Anda.</p>
+        </div>
+    </section>
+
+    <!-- 4. KONTEN KATALOG PRODUK -->
     <main id="beranda">
         <section class="kategori">
             <h2>Katalog Produk</h2>
@@ -69,30 +81,25 @@
 
     <!-- SCRIPT UNTUK INTERAKSI POPUP MENU & PWA -->
     <script>
-        // Logika Interaksi Hambuger Menu
         const menuBtn = document.getElementById('menuBtn');
         const closeBtn = document.getElementById('closeBtn');
         const menuOverlay = document.getElementById('menuOverlay');
         const menuItems = document.querySelectorAll('.menu-item');
 
-        // Buka Popup
         menuBtn.addEventListener('click', () => {
             menuOverlay.classList.add('active');
         });
 
-        // Tutup Popup via Tombol Silang
         closeBtn.addEventListener('click', () => {
             menuOverlay.classList.remove('active');
         });
 
-        // Tutup Popup otomatis jika salah satu menu diklik
         menuItems.forEach(item => {
             item.addEventListener('click', () => {
                 menuOverlay.classList.remove('active');
             });
         });
 
-        // Registrasi Service Worker PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
