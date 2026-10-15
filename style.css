@@ -171,3 +171,58 @@ footer {
     margin-top: 4rem;
     font-size: 0.9rem;
 }
+
+/* --- 3. CSS KATA PEMBUKA (WELCOME SECTION) --- */
+.welcome-section {
+    background-color: #ffffff;
+    padding: 3rem 1rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.welcome-container {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.welcome-container h2 {
+    color: #1a237e;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    border-left: none; /* Menghilangkan garis biru vertikal khusus untuk judul ini */
+    padding-left: 0;
+}
+
+.welcome-container p {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #555;
+    margin-bottom: 1.2rem;
+}
+
+.welcome-container .tagline {
+    font-weight: bold;
+    color: #0d47a1;
+    font-size: 1.2rem;
+    margin-top: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.welcome-container .closing {
+    font-style: italic;
+    color: #777;
+}
+
+/* Responsif untuk layar HP agar teks tidak terlalu besar */
+@media (max-width: 600px) {
+    .welcome-section {
+        padding: 2rem 1rem;
+    }
+    .welcome-container h2 {
+        font-size: 1.4rem;
+    }
+    .welcome-container p {
+        font-size: 0.95rem;
+    }
+}
+
