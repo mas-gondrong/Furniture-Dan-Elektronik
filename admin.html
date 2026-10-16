@@ -10,12 +10,16 @@
         .admin-nav a, .admin-nav button { padding: 0.5rem 1rem; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; text-decoration: none;}
         .btn-back { background: #0d47a1; color: white; }
         .btn-logout { background: #d32f2f; color: white; }
+        
+        /* Box Form & Login */
         .form-box { background: white; max-width: 600px; margin: 2rem auto; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .form-group { margin-bottom: 1.2rem; display: flex; flex-direction: column; }
         .form-group label { font-weight: bold; margin-bottom: 0.5rem; }
         .form-group input, .form-group select, .form-group textarea { padding: 0.7rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
         .btn-submit { background: #1a237e; color: white; border: none; padding: 0.8rem; font-size: 1rem; border-radius: 4px; cursor: pointer; font-weight: bold;}
         .btn-submit:disabled { background: #999; cursor: not-allowed; }
+        
+        /* Table Management */
         .admin-list { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
         .admin-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .admin-table th, .admin-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #eee; }
@@ -24,91 +28,119 @@
         .btn-delete { background: #d32f2f; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; }
         .img-preview-table { width: 60px; height: 40px; object-fit: cover; border-radius: 4px; }
         .upload-status { font-size: 0.85rem; margin-top: 5px; color: #0d47a1; font-weight: bold; }
+        
+        /* Kontrol Tampilan Halaman */
+        .hidden { display: none !important; }
     </style>
 
-    <!-- Memuat SDK Firebase secara Online -->
+    <!-- Memuat SDK Firebase secara Online (App, Auth, Storage) -->
+    <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
 </head>
 <body style="background-color: #f0f2f5;">
 
-    <!-- BAR NAVIGASI ADMIN -->
-    <nav class="admin-nav">
-        <a href="index.html" class="btn-back">← Kembali ke Beranda</a>
-        <button onclick="logoutAdmin()" class="btn-logout">Logout ✖</button>
-    </nav>
-
-    <!-- FORM INPUT & EDIT PRODUK -->
-    <div class="form-box">
-        <h2 id="form-title" style="margin-bottom: 1.5rem; color: #1a237e;">Upload / Tambah Produk Baru</h2>
-        <form id="productForm">
-            <input type="hidden" id="editIndex" value="-1">
-            <input type="hidden" id="prodImageUrl" value="">
-            
+    <!-- 1. HALAMAN LOGIN (Muncul pertama kali jika belum login) -->
+    <div id="loginArea" class="form-box">
+        <h2 style="margin-bottom: 1.5rem; color: #1a237e; text-align: center;">Login Admin FURNITEK</h2>
+        <form id="loginForm">
             <div class="form-group">
-                <label for="prodTitle">Nama Produk</label>
-                <input type="text" id="prodTitle" placeholder="Misal: Sofa Ruang Tamu L" required>
+                <label for="loginEmail">Email Admin</label>
+                <input type="email" id="loginEmail" placeholder="Masukkan email Anda" required>
             </div>
-            
             <div class="form-group">
-                <label for="prodCategory">Kategori</label>
-                <select id="prodCategory" required>
-                    <option value="furniture">Furniture</option>
-                    <option value="elektronik">Elektronik</option>
-                    <option value="peralatan">Peralatan Rumah Tangga</option>
-                </select>
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" placeholder="Masukkan password" required>
             </div>
-            
-            <!-- TOMBOL PILIH FILE DARI MEMORI HP -->
-            <div class="form-group">
-                <label for="prodFile">Pilih Foto / Gambar Produk</label>
-                <input type="file" id="prodFile" accept="image/*">
-                <div id="uploadStatus" class="upload-status"></div>
-            </div>
-            
-            <div class="form-group">
-                <label for="prodDesc">Deskripsi Ringkas</label>
-                <textarea id="prodDesc" rows="3" placeholder="Tuliskan keunggulan produk..." required></textarea>
-            </div>
-            
-            <button type="submit" class="btn-submit" id="btnSave">Simpan & Unggah Produk</button>
+            <button type="submit" class="btn-submit" style="width: 100%;">Masuk Panel Admin</button>
         </form>
+        <p style="text-align: center; margin-top: 1rem;"><a href="index.html" style="text-decoration: none; color: #666;">← Kembali ke Beranda</a></p>
     </div>
 
-    <!-- DAFTAR MANAGEMENT KATALOG -->
-    <div class="admin-list">
-        <h2 style="color: #222; margin-bottom: 1rem;">Manajemen Produk Terunggah</h2>
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>Foto</th>
-                    <th>Nama Produk</th>
-                    <th>Kategori</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody id="adminTableBody">
-                <!-- Diisi otomatis oleh JavaScript -->
-            </tbody>
-        </table>
+    <!-- 2. KONTEN UTAMA ADMIN PANEL (Tersembunyi sebelum login sukses) -->
+    <div id="adminPanelArea" class="hidden">
+        <!-- BAR NAVIGASI ADMIN -->
+        <nav class="admin-nav">
+            <a href="index.html" class="btn-back">← Kembali ke Beranda</a>
+            <button onclick="logoutAdmin()" class="btn-logout">Logout ✖</button>
+        </nav>
+
+        <!-- FORM INPUT & EDIT PRODUK -->
+        <div class="form-box">
+            <h2 id="form-title" style="margin-bottom: 1.5rem; color: #1a237e;">Upload / Tambah Produk Baru</h2>
+            <form id="productForm">
+                <input type="hidden" id="editIndex" value="-1">
+                <input type="hidden" id="prodImageUrl" value="">
+                
+                <div class="form-group">
+                    <label for="prodTitle">Nama Produk</label>
+                    <input type="text" id="prodTitle" placeholder="Misal: Sofa Ruang Tamu L" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="prodCategory">Kategori</label>
+                    <select id="prodCategory" required>
+                        <option value="furniture">Furniture</option>
+                        <option value="elektronik">Elektronik</option>
+                        <option value="peralatan">Peralatan Rumah Tangga</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="prodFile">Pilih Foto / Gambar Produk</label>
+                    <input type="file" id="prodFile" accept="image/*">
+                    <div id="uploadStatus" class="upload-status"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="prodDesc">Deskripsi Ringkas</label>
+                    <textarea id="prodDesc" rows="3" placeholder="Tuliskan keunggulan produk..." required></textarea>
+                </div>
+                
+                <button type="submit" class="btn-submit" id="btnSave">Simpan & Unggah Produk</button>
+            </form>
+        </div>
+
+        <!-- DAFTAR MANAGEMENT KATALOG -->
+        <div class="admin-list">
+            <h2 style="color: #222; margin-bottom: 1rem;">Manajemen Produk Terunggah</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Foto</th>
+                        <th>Nama Produk</th>
+                        <th>Kategori</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="adminTableBody">
+                    <!-- Diisi otomatis oleh JavaScript -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
-        // 📝 GANTI DENGAN KONFIGURASI FIREBASE ANDA DI SINI
+        // Konfigurasi Firebase Anda
         const firebaseConfig = {
-  apiKey: "AIzaSyA3QfPJunM3VZGcTla_oTO9fDeRt9sH8Cs",
-  authDomain: "furnitek-online.firebaseapp.com",
-  databaseURL: "https://furnitek-online-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "furnitek-online",
-  storageBucket: "furnitek-online.firebasestorage.app",
-  messagingSenderId: "149574668081",
-  appId: "1:149574668081:web:f2e8ebfa2f8183e538aa10"
-};
+          apiKey: "AIzaSyA3QfPJunM3VZGcTla_oTO9fDeRt9sH8Cs",
+          authDomain: "://firebaseapp.com",
+          databaseURL: "https://firebasedatabase.app",
+          projectId: "furnitek-online",
+          storageBucket: "furnitek-online.firebasestorage.app",
+          messagingSenderId: "149574668081",
+          appId: "1:149574668081:web:f2e8ebfa2f8183e538aa10"
+        };
         
         // Inisialisasi Firebase
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const storage = firebase.storage();
 
+        // Elements DOM
+        const loginArea = document.getElementById('loginArea');
+        const adminPanelArea = document.getElementById('adminPanelArea');
+        const loginForm = document.getElementById('loginForm');
         const productForm = document.getElementById('productForm');
         const adminTableBody = document.getElementById('adminTableBody');
         const prodFileInput = document.getElementById('prodFile');
@@ -118,16 +150,40 @@
 
         let products = JSON.parse(localStorage.getItem('furnitek_products')) || [];
 
-        // Logika Mengunggah Gambar Langsung Saat File Dipilih
+        // 🔐 CEK STATUS LOGIN USER OTOMATIS
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // Jika sudah login, tampilkan panel admin dan sembunyikan kotak login
+                loginArea.classList.add('hidden');
+                adminPanelArea.classList.remove('hidden');
+                renderAdminTable();
+            } else {
+                // Jika belum login / logout, tampilkan halaman login
+                loginArea.classList.remove('hidden');
+                adminPanelArea.classList.add('hidden');
+            }
+        });
+
+        // PROSES FORM LOGIN ADMIN
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => {
+                    alert("Gagal masuk: " + error.message);
+                });
+        });
+
+                // UPLOAD GAMBAR KE FIREBASE STORAGE
         prodFileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
+            const file = e.target.files[0]; // Memastikan mengambil file pertama
             if (!file) return;
 
-            // Kunci tombol simpan sewaktu proses unggah berlangsung
             btnSave.disabled = true;
             uploadStatus.innerText = "Mengunggah gambar ke Firebase... ⏳";
 
-            // Buat nama file unik berdasarkan waktu saat ini
             const storageRef = storage.ref('katalog/' + Date.now() + '_' + file.name);
             const uploadTask = storageRef.put(file);
 
@@ -135,12 +191,12 @@
                 null, 
                 (error) => {
                     console.error(error);
-                    uploadStatus.innerText = "Gagal mengunggah gambar. Coba lagi.";
+                    uploadStatus.innerText = "Gagal mengunggah gambar: " + error.message;
                     btnSave.disabled = false;
                 }, 
                 () => {
                     uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                        prodImageUrlInput.value = downloadURL; // Simpan URL otomatis hasil unggahan
+                        prodImageUrlInput.value = downloadURL;
                         uploadStatus.innerText = "Gambar berhasil dimuat! ✅";
                         btnSave.disabled = false;
                     });
@@ -148,6 +204,7 @@
             );
         });
 
+        // MANAJEMEN TABEL PRODUK
         function renderAdminTable() {
             adminTableBody.innerHTML = '';
             if(products.length === 0) {
@@ -210,23 +267,23 @@
             document.getElementById('editIndex').value = index;
             document.getElementById('prodTitle').value = prod.title;
             document.getElementById('prodCategory').value = prod.category;
-            document.getElementById('prodImage').value = prod.image;
+            prodImageUrlInput.value = prod.image;
             document.getElementById('prodDesc').value = prod.desc;
 
             document.getElementById('form-title').innerText = "✏️ Mode Edit Produk: " + prod.title;
             document.getElementById('btnSave').innerText = "Perbarui Produk";
+            uploadStatus.innerText = "Foto lama terdeteksi. Silakan pilih file baru jika ingin mengganti.";
             window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
-        // Fungsi Logout Simulasi
+        // LOGOUT DARI FIREBASE AUTH
         window.logoutAdmin = function() {
             if(confirm('Keluar dari Admin Panel?')) {
-                window.location.href = 'index.html';
+                auth.signOut().then(() => {
+                    alert("Anda telah keluar dari Admin Panel.");
+                });
             }
         }
-
-        // Render pertama kali terbuka
-        renderAdminTable();
     </script>
 </body>
 </html>
