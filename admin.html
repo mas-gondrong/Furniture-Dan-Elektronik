@@ -6,7 +6,6 @@
     <title>Admin Panel - FURNITEK</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Gaya Khusus Admin CSS (Bisa diletakkan di sini atau digabung ke style.css) */
         .admin-nav { display: flex; justify-content: space-between; background: #222; padding: 1rem; }
         .admin-nav a, .admin-nav button { padding: 0.5rem 1rem; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; text-decoration: none;}
         .btn-back { background: #0d47a1; color: white; }
@@ -16,6 +15,7 @@
         .form-group label { font-weight: bold; margin-bottom: 0.5rem; }
         .form-group input, .form-group select, .form-group textarea { padding: 0.7rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
         .btn-submit { background: #1a237e; color: white; border: none; padding: 0.8rem; font-size: 1rem; border-radius: 4px; cursor: pointer; font-weight: bold;}
+        .btn-submit:disabled { background: #999; cursor: not-allowed; }
         .admin-list { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
         .admin-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .admin-table th, .admin-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #eee; }
@@ -23,7 +23,12 @@
         .btn-edit { background: #ffa000; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; margin-right: 5px; }
         .btn-delete { background: #d32f2f; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; }
         .img-preview-table { width: 60px; height: 40px; object-fit: cover; border-radius: 4px; }
+        .upload-status { font-size: 0.85rem; margin-top: 5px; color: #0d47a1; font-weight: bold; }
     </style>
+
+    <!-- Memuat SDK Firebase secara Online -->
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
 </head>
 <body style="background-color: #f0f2f5;">
 
@@ -38,10 +43,13 @@
         <h2 id="form-title" style="margin-bottom: 1.5rem; color: #1a237e;">Upload / Tambah Produk Baru</h2>
         <form id="productForm">
             <input type="hidden" id="editIndex" value="-1">
+            <input type="hidden" id="prodImageUrl" value="">
+            
             <div class="form-group">
                 <label for="prodTitle">Nama Produk</label>
                 <input type="text" id="prodTitle" placeholder="Misal: Sofa Ruang Tamu L" required>
             </div>
+            
             <div class="form-group">
                 <label for="prodCategory">Kategori</label>
                 <select id="prodCategory" required>
@@ -50,14 +58,19 @@
                     <option value="peralatan">Peralatan Rumah Tangga</option>
                 </select>
             </div>
+            
+            <!-- TOMBOL PILIH FILE DARI MEMORI HP -->
             <div class="form-group">
-                <label for="prodImage">URL Foto / Gambar Produk</label>
-                <input type="text" id="prodImage" placeholder="Masukkan URL Gambar (Atau taruh nama file seperti sofa.jpg)" required>
+                <label for="prodFile">Pilih Foto / Gambar Produk</label>
+                <input type="file" id="prodFile" accept="image/*">
+                <div id="uploadStatus" class="upload-status"></div>
             </div>
+            
             <div class="form-group">
                 <label for="prodDesc">Deskripsi Ringkas</label>
                 <textarea id="prodDesc" rows="3" placeholder="Tuliskan keunggulan produk..." required></textarea>
             </div>
+            
             <button type="submit" class="btn-submit" id="btnSave">Simpan & Unggah Produk</button>
         </form>
     </div>
@@ -81,13 +94,59 @@
     </div>
 
     <script>
+        // 📝 GANTI DENGAN KONFIGURASI FIREBASE ANDA DI SINI
+        const firebaseConfig = {
+            apiKey: "AIzaSy...",
+            authDomain: "://firebaseapp.com",
+            projectId: "proyek-anda",
+            storageBucket: "://appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:12345:web:abcde"
+        };
+        
+        // Inisialisasi Firebase
+        firebase.initializeApp(firebaseConfig);
+        const storage = firebase.storage();
+
         const productForm = document.getElementById('productForm');
         const adminTableBody = document.getElementById('adminTableBody');
+        const prodFileInput = document.getElementById('prodFile');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const btnSave = document.getElementById('btnSave');
+        const prodImageUrlInput = document.getElementById('prodImageUrl');
 
-        // Ambil Data dari Memori Browser
         let products = JSON.parse(localStorage.getItem('furnitek_products')) || [];
 
-        // Fungsi Menampilkan Daftar di Tabel Management
+        // Logika Mengunggah Gambar Langsung Saat File Dipilih
+        prodFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Kunci tombol simpan sewaktu proses unggah berlangsung
+            btnSave.disabled = true;
+            uploadStatus.innerText = "Mengunggah gambar ke Firebase... ⏳";
+
+            // Buat nama file unik berdasarkan waktu saat ini
+            const storageRef = storage.ref('katalog/' + Date.now() + '_' + file.name);
+            const uploadTask = storageRef.put(file);
+
+            uploadTask.on('state_changed', 
+                null, 
+                (error) => {
+                    console.error(error);
+                    uploadStatus.innerText = "Gagal mengunggah gambar. Coba lagi.";
+                    btnSave.disabled = false;
+                }, 
+                () => {
+                    uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                        prodImageUrlInput.value = downloadURL; // Simpan URL otomatis hasil unggahan
+                        uploadStatus.innerText = "Gambar berhasil dimuat! ✅";
+                        btnSave.disabled = false;
+                    });
+                }
+            );
+        });
+
         function renderAdminTable() {
             adminTableBody.innerHTML = '';
             if(products.length === 0) {
@@ -110,22 +169,20 @@
             });
         }
 
-        // Event saat Form dikirim (Tambah / Update)
         productForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const index = document.getElementById('editIndex').value;
+            
             const newProduct = {
                 title: document.getElementById('prodTitle').value,
                 category: document.getElementById('prodCategory').value,
-                image: document.getElementById('prodImage').value,
+                image: prodImageUrlInput.value || 'https://placehold.co',
                 desc: document.getElementById('prodDesc').value
             };
 
             if (index === "-1") {
-                // Tambah baru
                 products.push(newProduct);
             } else {
-                // Update yang diedit
                 products[index] = newProduct;
                 document.getElementById('editIndex').value = "-1";
                 document.getElementById('form-title').innerText = "Upload / Tambah Produk Baru";
@@ -134,11 +191,11 @@
 
             localStorage.setItem('furnitek_products', JSON.stringify(products));
             productForm.reset();
+            uploadStatus.innerText = "";
             renderAdminTable();
             alert('Katalog berhasil diperbarui!');
         });
 
-        // Fungsi Hapus Produk
         window.deleteProduct = function(index) {
             if(confirm('Apakah Anda yakin ingin menghapus produk ini dari katalog?')) {
                 products.splice(index, 1);
@@ -147,7 +204,6 @@
             }
         }
 
-        // Fungsi Membuka Mode Edit
         window.editProduct = function(index) {
             const prod = products[index];
             document.getElementById('editIndex').value = index;
