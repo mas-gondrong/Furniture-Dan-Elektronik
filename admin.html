@@ -132,12 +132,14 @@
   appId: "1:149574668081:web:f2e8ebfa2f8183e538aa10"
 };
         
-        // Inisialisasi Firebase
-        firebase.initializeApp(firebaseConfig);
+        // Inisialisasi Firebase aman dengan validasi cek duplikasi
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const auth = firebase.auth();
         const storage = firebase.storage();
 
-        // Elements DOM
+        // Ambil elemen HTML (DOM)
         const loginArea = document.getElementById('loginArea');
         const adminPanelArea = document.getElementById('adminPanelArea');
         const loginForm = document.getElementById('loginForm');
@@ -148,77 +150,88 @@
         const btnSave = document.getElementById('btnSave');
         const prodImageUrlInput = document.getElementById('prodImageUrl');
 
+        // Ambil data produk lokal
         let products = JSON.parse(localStorage.getItem('furnitek_products')) || [];
 
-        // 🔐 CEK STATUS LOGIN USER OTOMATIS
+        // 🔐 CEK STATUS LOGIN SECARA OTOMATIS
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // Jika sudah login, tampilkan panel admin dan sembunyikan kotak login
+                // Jika user sah terdeteksi login, langsung buka panel input
                 loginArea.classList.add('hidden');
                 adminPanelArea.classList.remove('hidden');
                 renderAdminTable();
             } else {
-                // Jika belum login / logout, tampilkan halaman login
+                // Jika belum login / logout, pastikan tetap di halaman login
                 loginArea.classList.remove('hidden');
                 adminPanelArea.classList.add('hidden');
             }
         });
 
-                // PROSES FORM LOGIN ADMIN (Ganti bagian ini untuk melihat detail error)
+        // PROSES FORM LOGIN ADMIN (DENGAN PENANGANAN UTUH)
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
+            try {
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                const btnSubmit = loginForm.querySelector('button[type="submit"]');
+                
+                btnSubmit.innerText = "Memverifikasi... ⏳";
+                btnSubmit.disabled = true;
 
-            // Membuka animasi loading sederhana
-            const btnSubmit = e.target.querySelector('button');
-            btnSubmit.innerText = "Memverifikasi... ⏳";
-            btnSubmit.disabled = true;
-
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    alert("Login Berhasil! Selamat datang Admin.");
-                })
-                .catch(error => {
-                    // Ini akan memunculkan pesan error spesifik dari Firebase
-                    alert("Gagal masuk! Kode Error: " + error.code + "\nPesan: " + error.message);
-                    btnSubmit.innerText = "Masuk Panel Admin";
-                    btnSubmit.disabled = false;
-                });
+                auth.signInWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        alert("Login Berhasil! Selamat datang Admin.");
+                    })
+                    .catch((error) => {
+                        alert("Gagal masuk! Gara-gara: " + error.message);
+                        btnSubmit.innerText = "Masuk Panel Admin";
+                        btnSubmit.disabled = false;
+                    });
+            } catch (err) {
+                alert("Sistem web error: " + err.message);
+            }
         });
 
-                // UPLOAD GAMBAR KE FIREBASE STORAGE
+        // PROSES UPLOAD FOTO KE FIREBASE STORAGE (PERBAIKAN UTAMA)
         prodFileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0]; // Memastikan mengambil file pertama
-            if (!file) return;
+            try {
+                // Perbaikan fatal: Mengambil file pertama dengan indeks [0]
+                const file = e.target.files[0]; 
+                if (!file) return;
 
-            btnSave.disabled = true;
-            uploadStatus.innerText = "Mengunggah gambar ke Firebase... ⏳";
+                btnSave.disabled = true;
+                uploadStatus.innerText = "Mengunggah gambar ke Firebase... ⏳";
 
-            const storageRef = storage.ref('katalog/' + Date.now() + '_' + file.name);
-            const uploadTask = storageRef.put(file);
+                const storageRef = storage.ref('katalog/' + Date.now() + '_' + file.name);
+                const uploadTask = storageRef.put(file);
 
-            uploadTask.on('state_changed', 
-                null, 
-                (error) => {
-                    console.error(error);
-                    uploadStatus.innerText = "Gagal mengunggah gambar: " + error.message;
-                    btnSave.disabled = false;
-                }, 
-                () => {
-                    uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                        prodImageUrlInput.value = downloadURL;
-                        uploadStatus.innerText = "Gambar berhasil dimuat! ✅";
+                uploadTask.on('state_changed', 
+                    null, 
+                    (error) => {
+                        console.error(error);
+                        alert("Gagal mengunggah foto ke server: " + error.message);
+                        uploadStatus.innerText = "Gagal memuat gambar.";
                         btnSave.disabled = false;
-                    });
-                }
-            );
+                    }, 
+                    () => {
+                        uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                            prodImageUrlInput.value = downloadURL;
+                            uploadStatus.innerText = "Gambar berhasil dimuat! ✅";
+                            btnSave.disabled = false;
+                        });
+                    }
+                );
+            } catch (err) {
+                alert("Gagal memproses file foto: " + err.message);
+                btnSave.disabled = false;
+            }
         });
 
         // MANAJEMEN TABEL PRODUK
         function renderAdminTable() {
+            if (!adminTableBody) return;
             adminTableBody.innerHTML = '';
-            if(products.length === 0) {
+            if (products.length === 0) {
                 adminTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999;">Belum ada katalog produk.</td></tr>`;
                 return;
             }
@@ -266,7 +279,7 @@
         });
 
         window.deleteProduct = function(index) {
-            if(confirm('Apakah Anda yakin ingin menghapus produk ini dari katalog?')) {
+            if (confirm('Apakah Anda yakin ingin menghapus produk ini dari katalog?')) {
                 products.splice(index, 1);
                 localStorage.setItem('furnitek_products', JSON.stringify(products));
                 renderAdminTable();
@@ -289,9 +302,11 @@
 
         // LOGOUT DARI FIREBASE AUTH
         window.logoutAdmin = function() {
-            if(confirm('Keluar dari Admin Panel?')) {
+            if (confirm('Keluar dari Admin Panel?')) {
                 auth.signOut().then(() => {
                     alert("Anda telah keluar dari Admin Panel.");
+                }).catch((error) => {
+                    alert("Gagal logout: " + error.message);
                 });
             }
         }
