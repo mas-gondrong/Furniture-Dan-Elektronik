@@ -37,6 +37,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>  <!-- TAMBAH INI -->
 </head>
 <body style="background-color: #f0f2f5;">
 
@@ -132,12 +133,13 @@
   appId: "1:149574668081:web:f2e8ebfa2f8183e538aa10"
 };
         
-        // Inisialisasi Firebase aman dengan validasi cek duplikasi
+               // Inisialisasi Firebase aman dengan validasi cek duplikasi
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         const auth = firebase.auth();
         const storage = firebase.storage();
+        const db = firebase.database();   // TAMBAH INI
 
         // Ambil elemen HTML (DOM)
         const loginArea = document.getElementById('loginArea');
@@ -252,53 +254,96 @@
         }
 
         productForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const index = document.getElementById('editIndex').value;
-            
-            const newProduct = {
-                title: document.getElementById('prodTitle').value,
-                category: document.getElementById('prodCategory').value,
-                image: prodImageUrlInput.value || 'https://placehold.co',
-                desc: document.getElementById('prodDesc').value
-            };
+    e.preventDefault();
+    const index = document.getElementById('editIndex').value;
+    
+    const newProduct = {
+        title: document.getElementById('prodTitle').value,
+        category: document.getElementById('prodCategory').value,
+        image: prodImageUrlInput.value || 'https://placehold.co',
+        desc: document.getElementById('prodDesc').value,
+        createdAt: firebase.database.ServerValue.TIMESTAMP
+    };
 
-            if (index === "-1") {
-                products.push(newProduct);
-            } else {
-                products[index] = newProduct;
+    if (index === "-1") {
+        // TAMBAH: simpan ke Realtime Database
+        db.ref('products').push(newProduct)
+            .then(() => {
+                productForm.reset();
+                uploadStatus.innerText = "";
+                alert('Katalog berhasil ditambahkan ke Firebase!');
+            })
+            .catch(err => alert('Gagal simpan: ' + err.message));
+    } else {
+        // UPDATE produk berdasarkan key Firebase (bukan index array)
+        const editKey = document.getElementById('editIndex').getAttribute('data-key');
+        db.ref('products/' + editKey).update(newProduct)
+            .then(() => {
                 document.getElementById('editIndex').value = "-1";
+                document.getElementById('editIndex').removeAttribute('data-key');
                 document.getElementById('form-title').innerText = "Upload / Tambah Produk Baru";
                 document.getElementById('btnSave').innerText = "Simpan & Unggah Produk";
-            }
+                productForm.reset();
+                uploadStatus.innerText = "";
+                alert('Produk berhasil diperbarui!');
+            })
+            .catch(err => alert('Gagal update: ' + err.message));
+    }
+});
 
-            localStorage.setItem('furnitek_products', JSON.stringify(products));
-            productForm.reset();
-            uploadStatus.innerText = "";
-            renderAdminTable();
-            alert('Katalog berhasil diperbarui!');
-        });
+            // Ganti `let products = JSON.parse(localStorage.getItem('furnitek_products')) || [];`
+// dengan listener realtime:
+let products = [];
 
-        window.deleteProduct = function(index) {
-            if (confirm('Apakah Anda yakin ingin menghapus produk ini dari katalog?')) {
-                products.splice(index, 1);
-                localStorage.setItem('furnitek_products', JSON.stringify(products));
-                renderAdminTable();
-            }
-        }
+db.ref('products').on('value', (snapshot) => {
+    products = [];
+    snapshot.forEach(child => {
+        products.push({ key: child.key, ...child.val() });
+    });
+    renderAdminTable();
+});
 
-        window.editProduct = function(index) {
-            const prod = products[index];
-            document.getElementById('editIndex').value = index;
-            document.getElementById('prodTitle').value = prod.title;
-            document.getElementById('prodCategory').value = prod.category;
-            prodImageUrlInput.value = prod.image;
-            document.getElementById('prodDesc').value = prod.desc;
+function renderAdminTable() {
+    if (!adminTableBody) return;
+    adminTableBody.innerHTML = '';
+    if (products.length === 0) {
+        adminTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999;">Belum ada katalog produk.</td></tr>`;
+        return;
+    }
+    products.forEach((prod, index) => {
+        adminTableBody.innerHTML += `
+            <tr>
+                <td><img src="${prod.image}" class="img-preview-table" onerror="this.src='https://placehold.co'"></td>
+                <td><strong>${prod.title}</strong></td>
+                <td><span class="badge" style="margin:0;">${prod.category}</span></td>
+                <td>
+                    <button class="btn-edit" onclick="editProduct(${index})">Edit</button>
+                    <button class="btn-delete" onclick="deleteProduct(${index})">Hapus</button>
+                </td>
+            </tr>`;
+    });
+}
 
-            document.getElementById('form-title').innerText = "✏️ Mode Edit Produk: " + prod.title;
-            document.getElementById('btnSave').innerText = "Perbarui Produk";
-            uploadStatus.innerText = "Foto lama terdeteksi. Silakan pilih file baru jika ingin mengganti.";
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        }
+window.deleteProduct = function(index) {
+    if (!confirm('Apakah Anda yakin ingin menghapus produk ini?')) return;
+    const key = products[index].key;
+    db.ref('products/' + key).remove()
+        .catch(err => alert('Gagal hapus: ' + err.message));
+}
+
+window.editProduct = function(index) {
+    const prod = products[index];
+    document.getElementById('editIndex').value = index;
+    document.getElementById('editIndex').setAttribute('data-key', prod.key);
+    document.getElementById('prodTitle').value = prod.title;
+    document.getElementById('prodCategory').value = prod.category;
+    prodImageUrlInput.value = prod.image;
+    document.getElementById('prodDesc').value = prod.desc;
+    document.getElementById('form-title').innerText = "✏️ Mode Edit: " + prod.title;
+    document.getElementById('btnSave').innerText = "Perbarui Produk";
+    uploadStatus.innerText = "Foto lama terdeteksi. Pilih file baru jika ingin ganti.";
+    window.scrollTo({top: 0, behavior: 'smooth'});
+}
 
         // LOGOUT DARI FIREBASE AUTH
         window.logoutAdmin = function() {
