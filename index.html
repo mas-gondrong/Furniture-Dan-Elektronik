@@ -91,6 +91,52 @@
 
     <!-- SCRIPT UTAMA -->
     <script>
+          const firebaseConfig = {
+    apiKey: "AIzaSyA3QfPJunM3VZGcTla_oTO9fDeRt9sH8Cs",
+    authDomain: "furnitek-online.firebaseapp.com",
+    databaseURL: "https://furnitek-online-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "furnitek-online",
+    storageBucket: "furnitek-online.firebasestorage.app",
+    messagingSenderId: "149574668081",
+    appId: "1:149574668081:web:f2e8ebfa2f8183e538aa10"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+function renderProducts(products) {
+    document.getElementById('container-furniture').innerHTML = products.filter(p => p.category === 'furniture').length 
+        ? products.filter(p => p.category === 'furniture').map(cardHTML).join('') 
+        : '<p class="empty-text">Belum ada produk diunggah.</p>';
+
+    document.getElementById('container-elektronik').innerHTML = products.filter(p => p.category === 'elektronik').length 
+        ? products.filter(p => p.category === 'elektronik').map(cardHTML).join('') 
+        : '<p class="empty-text">Belum ada produk diunggah.</p>';
+
+    document.getElementById('container-peralatan').innerHTML = products.filter(p => p.category === 'peralatan').length 
+        ? products.filter(p => p.category === 'peralatan').map(cardHTML).join('') 
+        : '<p class="empty-text">Belum ada produk diunggah.</p>';
+}
+
+const cardHTML = (prod) => `
+    <div class="card">
+        <div class="card-img-wrapper">
+            <img src="${prod.image || 'https://placehold.co'}" alt="${prod.title}" class="prod-img">
+        </div>
+        <div class="card-content">
+            <div class="badge">${prod.category.toUpperCase()}</div>
+            <h3>${prod.title}</h3>
+            <p>${prod.desc}</p>
+        </div>
+    </div>`;
+
+// Listener realtime — data otomatis update saat admin tambah/hapus produk
+db.ref('products').on('value', (snapshot) => {
+    const products = [];
+    snapshot.forEach(child => products.push(child.val()));
+    renderProducts(products);
+});
+        
         // Menu Hamburger logic
         const menuBtn = document.getElementById('menuBtn');
         const closeBtn = document.getElementById('closeBtn');
@@ -100,50 +146,6 @@
         document.querySelectorAll('.menu-item').forEach(item => {
             item.addEventListener('click', () => menuOverlay.classList.remove('active'));
         });
-
-        // AMBIL & TAMPILKAN DATA DARI ADMIN (LOCALSTORAGE)
-        function loadProducts() {
-            const products = JSON.parse(localStorage.getItem('furnitek_products')) || [];
-            
-            // Bersihkan semua container terlebih dahulu
-            document.getElementById('container-furniture').innerHTML = '<p class="empty-text">Belum ada produk diunggah.</p>';
-            document.getElementById('container-elektronik').innerHTML = '<p class="empty-text">Belum ada produk diunggah.</p>';
-            document.getElementById('container-peralatan').innerHTML = '<p class="empty-text">Belum ada produk diunggah.</p>';
-
-            let counts = { furniture: 0, elektronik: 0, peralatan: 0 };
-
-            products.forEach(prod => {
-                const cardHTML = `
-                    <div class="card">
-                        <div class="card-img-wrapper">
-                            <img src="${prod.image || 'https://placehold.co'}" alt="${prod.title}" class="prod-img">
-                        </div>
-                        <div class="card-content">
-                            <div class="badge">${prod.category.toUpperCase()}</div>
-                            <h3>${prod.title}</h3>
-                            <p>${prod.desc}</p>
-                        </div>
-                    </div>
-                `;
-
-                if (prod.category === 'furniture') {
-                    if(counts.furniture === 0) document.getElementById('container-furniture').innerHTML = '';
-                    document.getElementById('container-furniture').innerHTML += cardHTML;
-                    counts.furniture++;
-                } else if (prod.category === 'elektronik') {
-                    if(counts.elektronik === 0) document.getElementById('container-elektronik').innerHTML = '';
-                    document.getElementById('container-elektronik').innerHTML += cardHTML;
-                    counts.elektronik++;
-                } else if (prod.category === 'peralatan') {
-                    if(counts.peralatan === 0) document.getElementById('container-peralatan').innerHTML = '';
-                    document.getElementById('container-peralatan').innerHTML += cardHTML;
-                    counts.peralatan++;
-                }
-            });
-        }
-
-        // Jalankan saat halaman dibuka
-        window.addEventListener('DOMContentLoaded', loadProducts);
 
         // Registrasi Service Worker PWA
         if ('serviceWorker' in navigator) {
